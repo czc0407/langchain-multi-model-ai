@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+data/exp2/models/
+data/exp2/data/
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
