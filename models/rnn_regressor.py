@@ -391,9 +391,8 @@ class RNNRegressor:
         y_pred_orig = self._scaler_y.inverse_transform(
             y_pred_final.reshape(-1, 1)
         ).flatten()
-        y_test_orig = self._scaler_y.inverse_transform(
-            y_test.reshape(-1, 1)
-        ).flatten()
+        # y_test 已从 npz 加载为原始价格（unscaled），无需再次反归一化
+        y_test_orig = y_test.flatten()
 
         rel_errors = np.abs(y_pred_orig - y_test_orig) / (
             np.abs(y_test_orig) + 1e-8

@@ -12,6 +12,11 @@ from torchvision import datasets, transforms
 from models.cnn_classifier import CNNClassifier
 from config import CLASS_MAP
 
+import tempfile
+
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
+FASHION_DATA_DIR = os.path.join(tempfile.gettempdir(), "fashion_mnist_data")
+
 print("=" * 60)
 print("  CNN 准确率测试")
 print("=" * 60)
@@ -21,7 +26,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 dataset = datasets.FashionMNIST(
-    "./data", train=False, download=True, transform=transform
+    FASHION_DATA_DIR, train=False, download=True, transform=transform
 )
 
 selected_indices = [
@@ -39,7 +44,7 @@ total = 0
 
 for idx in selected_indices:
     img, label = dataset[idx]
-    true_class = CLASS_MAP[label.item()]  # 0,1,7,8 → 0,1,2,3
+    true_class = CLASS_MAP[label]  # 0,1,7,8 → 0,1,2,3
 
     img_np = img.numpy().reshape(1, 1, 28, 28)
 

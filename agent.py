@@ -1,12 +1,13 @@
 """
-LangChain Agent 配置：LLM + Tools + 对话管理
+LangChain Agent 配置：LLM + Tools + Memory
 """
-from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.memory import ConversationBufferWindowMemory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from config import (
     LLM_PROVIDER, DASHSCOPE_API_KEY, DEEPSEEK_API_KEY,
-    LLM_MODEL_NAME, LLM_TEMPERATURE, MEMORY_WINDOW_K,
+    LLM_MODEL_NAME, LLM_TEMPERATURE, MAX_ITERATIONS, MEMORY_WINDOW_K,
 )
 from tools.image_tool import classify_fashion_image
 from tools.regression_tool import predict_stock_price
@@ -24,6 +25,7 @@ def _get_llm():
             temperature=LLM_TEMPERATURE,
         )
     else:
+        # dashscope (通义千问)
         from langchain_community.chat_models.tongyi import ChatTongyi
         return ChatTongyi(
             model=LLM_MODEL_NAME,
@@ -52,45 +54,28 @@ SYSTEM_PROMPT = """你是一个严格的多模型 AI 助手，只能通过调用
 
 5. **语言匹配：** 用与用户相同的语言回复"""
 
-
-class AgentSession:
-    """封装 Agent 和多轮对话状态"""
-
-    def __init__(self):
-        llm = _get_llm()
-        self._agent = create_agent(
-            model=llm,
-            tools=TOOLS,
-            system_prompt=SYSTEM_PROMPT,
-        )
-        self._history: list = []  # HumanMessage / AIMessage
-
-    def chat(self, user_input: str) -> str:
-        """发送用户消息，返回 Agent 回复文本"""
-        messages = list(self._history)
-        messages.append(HumanMessage(content=user_input))
-
-        result = self._agent.invoke({"messages": messages})
-
-        # 提取所有 AI 回复
-        responses = [
-            msg.content for msg in result.get("messages", [])
-            if isinstance(msg, AIMessage) and msg.content
-        ]
-
-        # 取最后一条 AI 回复
-        response = responses[-1] if responses else "(无回复)"
-
-        # 更新对话历史（截断到最近 k 轮，每轮 = human + ai）
-        self._history.append(HumanMessage(content=user_input))
-        self._history.append(AIMessage(content=response))
-        max_msgs = MEMORY_WINDOW_K * 2
-        if len(self._history) > max_msgs:
-            self._history = self._history[-max_msgs:]
-
-        return response
+PROMPT = ChatPromptTemplate.from_messages([
+    ("system", SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
 
 
-def create_agent_session():
-    """创建并返回 AgentSession"""
-    return AgentSession()
+def create_agent():
+    """创建并返回 AgentExecutor"""
+    llm = _get_llm()
+    memory = ConversationBufferWindowMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        k=MEMORY_WINDOW_K,
+    )
+    agent = create_tool_calling_agent(llm, TOOLS, PROMPT)
+    return AgentExecutor(
+        agent=agent,
+        tools=TOOLS,
+        memory=memory,
+        max_iterations=MAX_ITERATIONS,
+        verbose=False,
+        handle_parsing_errors=True,
+    )

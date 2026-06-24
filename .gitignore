@@ -2,9 +2,11 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
-data/exp2/models/
-data/exp2/data/
-.venv/
-venv/
 *.egg-info/
 .ipynb_checkpoints/
+
+# 运行时生成的数据和模型
+data/exp2/models/
+data/exp2/data/
+fashion_data/
+**/FashionMNIST/

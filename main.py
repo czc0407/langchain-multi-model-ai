@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from agent import create_agent_session
+from agent import create_agent
 from config import LLM_PROVIDER
 
 DEMO_CASES = [
@@ -30,7 +30,7 @@ DEMO_CASES = [
 ]
 
 
-def run_interactive(session):
+def run_interactive(agent_executor):
     print("=" * 60)
     print("  LangChain 多模型 AI 系统 - 交互式 Demo")
     print(f"  LLM Provider: {LLM_PROVIDER}")
@@ -50,8 +50,8 @@ def run_interactive(session):
                 break
 
             print("Agent > ", end="", flush=True)
-            response = session.chat(user_input)
-            print(response)
+            result = agent_executor.invoke({"input": user_input})
+            print(result.get("output", "(无输出)"))
             print()
 
         except KeyboardInterrupt:
@@ -61,7 +61,7 @@ def run_interactive(session):
             print(f"\n[错误] {e}\n")
 
 
-def run_demo(session):
+def run_demo(agent_executor):
     print("=" * 60)
     print("  LangChain 多模型 AI 系统 - Demo 模式")
     print(f"  LLM Provider: {LLM_PROVIDER}")
@@ -74,8 +74,8 @@ def run_demo(session):
         print(f"Agent > ", end="", flush=True)
 
         try:
-            response = session.chat(case)
-            print(response)
+            result = agent_executor.invoke({"input": case})
+            print(result.get("output", "(无输出)"))
         except Exception as e:
             print(f"[错误] {e}")
         print()
@@ -83,13 +83,13 @@ def run_demo(session):
 
 def main():
     print("[系统] 初始化 Agent...")
-    session = create_agent_session()
+    agent_executor = create_agent()
     print("[系统] 初始化完成\n")
 
     if "--demo" in sys.argv:
-        run_demo(session)
+        run_demo(agent_executor)
     else:
-        run_interactive(session)
+        run_interactive(agent_executor)
 
 
 if __name__ == "__main__":

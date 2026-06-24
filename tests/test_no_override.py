@@ -13,9 +13,9 @@ import numpy as np
 from PIL import Image
 
 from agent import SYSTEM_PROMPT, TOOLS
-from utils import img_to_tensor
-from models.cnn_classifier import CNNClassifier
-from models.rnn_regressor import RNNRegressor
+
+classify_fashion_image = TOOLS[0]
+predict_stock_price = TOOLS[1]
 
 print("=" * 60)
 print("  模型输出防篡改验证")
@@ -29,12 +29,9 @@ anti_override_rules = [
     "不能自行猜测",
     "原样",
 ]
-for rule in anti_override_rules:
-    assert any(
-        rule in SYSTEM_PROMPT or rule.lower() in SYSTEM_PROMPT.lower()
-        for rule in anti_override_rules
-    ), "防篡改规则至少需要一条"
-print(f"  ✓ 防篡改规则存在")
+assert any(rule in SYSTEM_PROMPT for rule in anti_override_rules), \
+    "防篡改规则至少需要一条"
+print("  ✓ 防篡改规则存在")
 
 # ── 2. 验证图像分类 Tool 输出格式 ──
 print("\n[2/4] 验证 classify_fashion_image 输出格式...")
